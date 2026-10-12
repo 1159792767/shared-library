@@ -1,0 +1,80 @@
+# =============================================================================
+# 公共库发布流水线（GitLab 阶段——公司内网上线）
+#
+# 与 .github/workflows/release.yml 逻辑一一对应，迁移只换壳：
+#   - 私有 NuGet 源：GitHub Packages -> GitLab 内置 NuGet Package Registry
+#     （用 CI_JOB_TOKEN 认证：发布凭据只在 CI runner，开发机无法发版）
+#   - 项目库侧迁移：nuget.config 源地址换成下方 NUGET_SOURCE，代码零改动
+#
+# Runner 要求：
+#   - 纯 C# 测试：任意 docker/windows runner
+#   - LabVIEW 冒烟：自托管 Windows runner（安装 LabVIEW 开发环境 + G CLI）
+#
+# tag 命名约定：<包名>v<版本>，如：Company.Drivers-v2.3.1
+# =============================================================================
+
+stages: [test, publish, notify]
+
+variables:
+  # GitLab Nuget Registry 地址（接入时替换项目 ID，或用 CI_PROJECT_ID 引用本仓库）
+  NUGET_SOURCE: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json"
+  # 通知用群机器人 webhook（在 GitLab CI/CD Variables 配置，类型 Masked）
+  # IM_WEBHOOK: qyapi.weixin.qq.com/... 或 oapi.dingtalk.com/...
+
+# ---------- 门禁：单元测试 + （可选）LabVIEW 冒烟 ----------
+test:
+  stage: test
+  tags: [windows]              # LabVIEW 冒烟需 Windows 自托管 runner
+  script:
+    - dotnet test --nologo
+    # 接入 LabVIEW 后启用冒烟（g-cli 无界面运行测试 VI）：
+    # - g-cli --kill-if-needed run labview\tests\smoke-test.vi
+  rules:
+    # MR 到 main：门禁（配合"受保护分支"设置：1 人审批 + 流水线通过才可合并）
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG =~ /v\d+\.\d+\.\d+/     # tag 流水线也要先过测试
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ---------- 发布：仅 tag 触发 ----------
+publish:
+  stage: publish
+  tags: [windows]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /v\d+\.\d+\.\d+/
+  script:
+    - |
+      # 从 tag 解析包名与版本（约定：<PackageId>v<SemVer>）
+      $tag = "$env:CI_COMMIT_TAG"
+      if ($tag -match '^(?<pkg>[A-Za-z.]+)-v(?<ver>\d+\.\d+\.\d+(?:-[0-9A-Za-z.\-]+)?)$') {
+        $pkg = $Matches['pkg']; $ver = $Matches['ver']
+      } else {
+        throw "tag '$tag' 不符合约定格式 <PackageId>v<版本>（例：Company.Drivers-v2.3.1）"
+      }
+      dotnet pack "packages/csharp/$pkg" -c Release -o dist /p:Version=$ver --nologo
+      if ($LASTEXITCODE -ne 0) { throw "打包失败，发布中止" }
+
+      # 推送 GitLab NuGet Registry——CI_JOB_TOKEN 认证：
+      # 开发机上没有这个 token，发布权只在 CI（杜绝幽灵版本）
+      dotnet nuget push "dist/*.nupkg" --source "$env:NUGET_SOURCE" --api-key "$env:CI_JOB_TOKEN"
+      if ($LASTEXITCODE -ne 0) { throw "推送私有源失败，发布中止" }
+
+      # TODO 更新版本清单 manifest.json（DMZ 静态清单服务/独立仓库，接入时替换）
+      Write-Host "清单更新：$pkg -> $ver"
+  artifacts:
+    paths: [dist/]
+    expire_in: 7 days
+
+# ---------- 群通知：内外网同事都收到 ----------
+notify:
+  stage: notify
+  tags: [windows]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /v\d+\.\d+\.\d+/
+  script:
+    - |
+      # 内网 GitLab 推外网 IM：网络策略需放行 CI runner 到 IM 服务的出站 HTTPS
+      $tag = "$env:CI_COMMIT_TAG"
+      $pkg = $tag -replace '-v\d+\.\d+\.\d+.*$',''
+      $ver = $tag -replace '^[A-Za-z.]+-v',''
+      ./tools/notify-im.ps1 -WebhookUrl "$env:IM_WEBHOOK" -PackageId $pkg -Version $ver `
+        -Notes "$env:CI_COMMIT_MESSAGE" -Critical:($env:CI_COMMIT_MESSAGE -like '*[critical]*')

@@ -1,0 +1,19 @@
+<Project>
+  <!-- 公共库 monorepo 全局构建属性：所有包统一从这里继承 -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>Company</Authors>
+    <Company>Company</Company>
+    <!--
+      版本策略说明：
+      - 日常开发不改版本号，由 CI 在发布时按 git tag 注入（见 .github/workflows/release.yml）
+      - 本地调试时使用 csproj 中的 Version 默认值
+      - 版本规则遵循 SemVer：主版本.次版本.修订号[-预发布标识]
+    -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>

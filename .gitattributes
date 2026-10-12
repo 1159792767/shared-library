@@ -1,0 +1,19 @@
+# 统一换行处理
+* text=auto
+
+# ---- LabVIEW 二进制文件：禁止文本级自动合并（否则 git 会生成损坏的 VI）----
+*.vi      -merge binary
+*.ctl     -merge binary
+*.lvclass -merge binary
+*.vit     -merge binary
+*.lvlibp  -merge binary
+*.lvprog  -merge binary
+
+# ---- 文本类项目文件：正常合并 ----
+*.lvlib   text
+*.lvproj  text
+*.ini     text
+
+# ---- LabVIEW 本地缓存/别名文件：不进库 ----
+*.aliases export-ignore
+*.lvlps   export-ignore

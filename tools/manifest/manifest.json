@@ -1,0 +1,31 @@
+﻿{
+    "packages":  {
+                     "Company.UpdateChecker":  {
+                                                   "latest":  "1.0.0",
+                                                   "channel":  "stable",
+                                                   "critical":  false,
+                                                   "releasedAt":  "2026-10-12T02:51:00Z",
+                                                   "notes":  "初始版本：程序内更新检查模块",
+                                                   "artifacts":  [
+                                                                     {
+                                                                         "type":  "nuget",
+                                                                         "url":  "https://updates.company.com/feed/company.updatechecker.1.0.0.nupkg"
+                                                                     }
+                                                                 ]
+                                               },
+                     "Company.Drivers":  {
+                                             "latest":  "2.3.1",
+                                             "channel":  "stable",
+                                             "critical":  true,
+                                             "releasedAt":  "2026-10-12T03:19:34Z",
+                                             "notes":  "修复 Modbus 断连后未自动重试导致写寄存器失败的缺陷",
+                                             "artifacts":  [
+                                                               {
+                                                                   "type":  "nuget",
+                                                                   "url":  "https://updates.company.com/feed/company.drivers.2.3.1.nupkg"
+                                                               }
+                                                           ]
+                                         }
+                 },
+    "generatedAt":  "2026-10-12T03:49:11Z"
+}

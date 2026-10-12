@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/packages/" />
+  <Folder Name="/packages/csharp/">
+    <Project Path="packages/csharp/Company.Drivers/Company.Drivers.csproj" />
+    <Project Path="packages/csharp/Company.UpdateChecker/Company.UpdateChecker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Company.Drivers.Tests/Company.Drivers.Tests.csproj" />
+    <Project Path="tests/Company.UpdateChecker.Tests/Company.UpdateChecker.Tests.csproj" />
+  </Folder>
+</Solution>

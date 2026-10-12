@@ -1,0 +1,16 @@
+# 构建产物
+bin/
+obj/
+dist/
+
+# 本地验证产物（真实环境源在 CI，这些不入库）
+tools/nuget-feed/*.nupkg
+
+# IDE
+.vs/
+*.user
+
+# LabVIEW 本地文件
+*.aliases
+*.lvlps
+*.cache/

@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    中央包管理（CPM）：monorepo 内所有项目/测试的依赖版本统一在这里管理。
+    业务包 PackageReference 一律不写 Version，升级只改这一个文件（走 MR 审批）。
+    项目库（消费方）参考 project-demo 的做法：锁文件 + 显式版本号升级。
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,140 @@
+# =============================================================================
+# 公共库发布流水线（GitHub 阶段——真实发布到 GitHub Packages）
+#
+# 防错乱四闸门在此落地：
+#   1. PR/推送门禁：main 改动必须 CI 全绿（配合仓库分支保护：禁直推、1 人审批）
+#   2. 版本唯一来源：正式版本号只从 git tag 提取（<包名>v<SemVer>，如 Company.Drivers-v2.3.1）
+#   3. 发布凭据只在 CI：GITHUB_TOKEN 不下发开发机，本地无法发版
+#   4. 消费端锁文件：项目库 packages.lock.json（见 project-demo）
+#
+# 发布后自动化：包进 GitHub Packages -> 冒烟还原(证明项目库可消费) ->
+#               manifest.json 自动提交回 main（程序内提示的数据源）-> 群通知
+#
+# 说明：LabVIEW 冒烟接入后需把 runner 换成 Windows 自托管（装 LabVIEW + G CLI）。
+# =============================================================================
+
+name: release
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]        # main 每次推进都跑门禁
+    tags: ['*v*.*.*']       # 推 tag = 发布
+
+jobs:
+  # ---------- 门禁：单元测试 ----------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: 单元测试（不过 = 不允许合并/发布）
+        run: dotnet test --nologo
+      # LabVIEW 冒烟（接入自托管 Windows runner 后启用）：
+      # - name: LabVIEW 冒烟测试
+      #   run: g-cli --kill-if-needed run "labview/tests/Smoke Test.vi"
+
+  # ---------- 发布：仅 tag 触发 ----------
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # 提交 manifest.json 更新回 main
+      packages: write      # 发布到 GitHub Packages（私有 NuGet 源）
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要 tag 注释对象 + main 引用
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 从 tag 解析包名/版本/发布说明
+        id: meta
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^(?<pkg>[A-Za-z.]+)-v(?<ver>\d+\.\d+\.\d+(?:-[0-9A-Za-z.\-]+)?)$') {
+            throw "tag '$tag' 不符合约定 <PackageId>v<版本>（例：Company.Drivers-v2.3.1）"
+          }
+          $pkg = $Matches['pkg']; $ver = $Matches['ver']
+          # 发布说明取 annotated tag 的首行；含 [critical] 自动标记重要更新
+          $notes = (git tag -l --format='%(contents:subject)' $tag)
+          if ([string]::IsNullOrWhiteSpace($notes)) { $notes = "发布 $pkg $ver" }
+          "package-id=$pkg"  >> $env:GITHUB_OUTPUT
+          "version=$ver"     >> $env:GITHUB_OUTPUT
+          "critical=$($notes -like '*[critical]*')" >> $env:GITHUB_OUTPUT
+          "notes<<NOTES_EOF" >> $env:GITHUB_OUTPUT
+          "$notes"           >> $env:GITHUB_OUTPUT
+          "NOTES_EOF"        >> $env:GITHUB_OUTPUT
+
+      - name: 打包（版本号只来自 tag）
+        run: >-
+          dotnet pack packages/csharp/${{ steps.meta.outputs.package-id }}
+          -c Release -o dist -p:Version=${{ steps.meta.outputs.version }} --nologo
+
+      - name: 发布到 GitHub Packages（私有 NuGet 源）
+        run: >-
+          dotnet nuget push "dist/*.nupkg"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}"
+          --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+
+      - name: 冒烟验证（从 GitHub Packages 还原并编译刚发布的包）
+        shell: pwsh
+        env:
+          SMOKE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 模拟一个项目库消费：凭 CI 令牌把刚发布的包还原+编译通过才算发布成功。
+          # （生产环境项目库用各自凭据，此处证明"包已可被正常消费"。）
+          $tmp = Join-Path $env:RUNNER_TEMP ("pkgsmoke-" + [guid]::NewGuid())
+          New-Item -ItemType Directory -Path $tmp | Out-Null
+          $cfg = Join-Path $tmp "nuget.config"
+          @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration><packageSources /></configuration>
+          "@ | Set-Content $cfg
+          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" `
+            --name smoke-feed --username "${{ github.repository_owner }}" `
+            --password $env:SMOKE_TOKEN --store-password-in-clear-text --configfile $cfg | Out-Null
+          $src = Join-Path $tmp "Smoke.csproj"
+          @"
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net10.0</TargetFramework>
+              <Nullable>enable</Nullable>
+            </PropertyGroup>
+            <ItemGroup>
+              <PackageReference Include="${{ steps.meta.outputs.package-id }}" Version="${{ steps.meta.outputs.version }}" />
+            </ItemGroup>
+          </Project>
+          "@ | Set-Content $src
+          dotnet restore $src --configfile $cfg
+          if ($LASTEXITCODE -ne 0) { throw "冒烟失败：包无法从 GitHub Packages 还原" }
+          dotnet build $src --no-restore --nologo -v quiet
+          if ($LASTEXITCODE -ne 0) { throw "冒烟失败：引用包无法编译" }
+          Write-Host "冒烟通过：${{ steps.meta.outputs.package-id }} ${{ steps.meta.outputs.version }} 可被项目正常还原/编译"
+
+      - name: 更新版本清单并提交回 main（含群通知）
+        shell: pwsh
+        run: |
+          git config user.name "release-bot"
+          git config user.email "release-bot@users.noreply.github.com"
+          # -ManifestOnly：包已发布，只做"清单更新 + 群通知"（群 webhook 未配置时打印消息）
+          ./tools/update-manifest.ps1 `
+            -PackageId "${{ steps.meta.outputs.package-id }}" `
+            -Version "${{ steps.meta.outputs.version }}" `
+            -Notes "${{ steps.meta.outputs.notes }}" `
+            -Critical:$${{ steps.meta.outputs.critical }} `
+            -ManifestOnly `
+            -WebhookUrl "${{ secrets.IM_WEBHOOK }}"
+          git add tools/manifest/manifest.json
+          if (git diff --staged --quiet) {
+            Write-Host "清单无变化（该版本已登记），跳过提交"
+          } else {
+            git commit -m "chore(manifest): ${{ steps.meta.outputs.package-id }} ${{ steps.meta.outputs.version }} [skip ci]"
+            git push origin HEAD:main
+          }
