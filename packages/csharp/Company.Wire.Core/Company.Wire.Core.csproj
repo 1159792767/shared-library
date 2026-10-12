@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- 接线核心库：不单独发 NuGet，由 Setup 工程引用同仓构建 -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>
