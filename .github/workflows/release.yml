@@ -48,7 +48,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # 需要 tag 注释对象 + main 引用
+          fetch-depth: 0   # 需要完整历史 + main 引用
+          fetch-tags: true # 拉取带注释 tag 对象（默认 false 时 tag 退化为轻量引用，%(contents:subject) 会读到提交信息而非标签说明）
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
@@ -63,11 +64,12 @@ jobs:
           }
           $pkg = $Matches['pkg']; $ver = $Matches['ver']
           # 发布说明取 annotated tag 的首行；含 [critical] 自动标记重要更新
+          # 注意：[critical] 必须用字面子串判断——-like 会把它当通配符字符类（匹配 c/r/i/t/a/l 任一字母），几乎恒真
           $notes = (git tag -l --format='%(contents:subject)' $tag)
           if ([string]::IsNullOrWhiteSpace($notes)) { $notes = "发布 $pkg $ver" }
           "package-id=$pkg"  >> $env:GITHUB_OUTPUT
           "version=$ver"     >> $env:GITHUB_OUTPUT
-          "critical=$($notes -like '*[critical]*')" >> $env:GITHUB_OUTPUT
+          "critical=$($notes.Contains('[critical]'))" >> $env:GITHUB_OUTPUT
           "notes<<NOTES_EOF" >> $env:GITHUB_OUTPUT
           "$notes"           >> $env:GITHUB_OUTPUT
           "NOTES_EOF"        >> $env:GITHUB_OUTPUT
@@ -123,6 +125,10 @@ jobs:
         run: |
           git config user.name "release-bot"
           git config user.email "release-bot@users.noreply.github.com"
+          # 基于最新 main 改清单：tag 检出点可能落后于 main，直接推会被拒（非快进）；
+          # 先建临时分支，推送遇竞态再变基重试一次
+          git fetch origin main
+          git checkout -B manifest-update origin/main
           # -ManifestOnly：包已发布，只做"清单更新 + 群通知"（群 webhook 未配置时打印消息）
           ./tools/update-manifest.ps1 `
             -PackageId "${{ steps.meta.outputs.package-id }}" `
@@ -132,9 +138,15 @@ jobs:
             -ManifestOnly `
             -WebhookUrl "${{ secrets.IM_WEBHOOK }}"
           git add tools/manifest/manifest.json
-          if (git diff --staged --quiet) {
+          git diff --staged --quiet
+          if ($LASTEXITCODE -eq 0) {
             Write-Host "清单无变化（该版本已登记），跳过提交"
           } else {
             git commit -m "chore(manifest): ${{ steps.meta.outputs.package-id }} ${{ steps.meta.outputs.version }} [skip ci]"
             git push origin HEAD:main
+            if ($LASTEXITCODE -ne 0) {
+              git fetch origin main
+              git rebase origin/main
+              git push origin HEAD:main
+            }
           }

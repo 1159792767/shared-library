@@ -76,5 +76,6 @@ notify:
       $tag = "$env:CI_COMMIT_TAG"
       $pkg = $tag -replace '-v\d+\.\d+\.\d+.*$',''
       $ver = $tag -replace '^[A-Za-z.]+-v',''
+      # [critical] 必须字面子串判断：-like 会把它当通配符字符类（匹配 c/r/i/t/a/l 任一字母），几乎恒真
       ./tools/notify-im.ps1 -WebhookUrl "$env:IM_WEBHOOK" -PackageId $pkg -Version $ver `
-        -Notes "$env:CI_COMMIT_MESSAGE" -Critical:($env:CI_COMMIT_MESSAGE -like '*[critical]*')
+        -Notes "$env:CI_COMMIT_MESSAGE" -Critical:("$env:CI_COMMIT_MESSAGE".Contains('[critical]'))
