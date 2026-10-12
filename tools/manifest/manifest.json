@@ -14,18 +14,18 @@
       ]
     },
     "Company.Drivers": {
-      "latest": "2.3.1",
+      "latest": "2.4.0",
       "channel": "stable",
-      "critical": true,
-      "releasedAt": "2026-10-12T04:29:29Z",
-      "notes": "修复 Modbus 断连后未自动重试导致写寄存器失败的缺陷",
+      "critical": false,
+      "releasedAt": "2026-10-12T04:34:36Z",
+      "notes": "新增 ModbusClient 批量读取寄存器能力 ReadRegisters",
       "artifacts": [
         {
           "type": "nuget",
-          "url": "https://updates.company.com/feed/company.drivers.2.3.1.nupkg"
+          "url": "https://updates.company.com/feed/company.drivers.2.4.0.nupkg"
         }
       ]
     }
   },
-  "generatedAt": "2026-10-12T04:29:29Z"
+  "generatedAt": "2026-10-12T04:34:36Z"
 }
