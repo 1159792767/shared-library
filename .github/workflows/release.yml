@@ -68,11 +68,14 @@ jobs:
           git fetch --no-tags origin "+refs/tags/$($tag):refs/tags/$($tag)"
           # 发布说明取 annotated tag 的首行；含 [critical] 自动标记重要更新
           # 注意：[critical] 必须用字面子串判断——-like 会把它当通配符字符类（匹配 c/r/i/t/a/l 任一字母），几乎恒真
-          $notes = (git tag -l --format='%(contents:subject)' $tag)
-          if ([string]::IsNullOrWhiteSpace($notes)) { $notes = "发布 $pkg $ver" }
+          $subject = "$(git tag -l --format='%(contents:subject)' $tag)"
+          if ([string]::IsNullOrWhiteSpace($subject)) { $subject = "发布 $pkg $ver" }
+          $critical = [string]$subject.Contains('[critical]')
+          # [critical] 是控制标记，不进面向用户的发布说明（-replace 为正则语义，[] 需转义）
+          $notes = $subject -replace '\s*\[critical\]\s*$', ''
           "package-id=$pkg"  >> $env:GITHUB_OUTPUT
           "version=$ver"     >> $env:GITHUB_OUTPUT
-          "critical=$($notes.Contains('[critical]'))" >> $env:GITHUB_OUTPUT
+          "critical=$critical" >> $env:GITHUB_OUTPUT
           "notes<<NOTES_EOF" >> $env:GITHUB_OUTPUT
           "$notes"           >> $env:GITHUB_OUTPUT
           "NOTES_EOF"        >> $env:GITHUB_OUTPUT
