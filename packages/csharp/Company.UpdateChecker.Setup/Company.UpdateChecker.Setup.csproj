@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <IsPackable>false</IsPackable>
+    <Version>1.0.0</Version>
+    <Description>公共库接线安装向导：双击为既有 C# 项目接入程序内更新检查（扫描依赖、生成接线文件、自动挂接、冒烟验证、失败回滚）。</Description>
+    <PackageTags>setup;wizard;update-checker</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Company.Wire.Core\Company.Wire.Core.csproj" />
+  </ItemGroup>
+</Project>
