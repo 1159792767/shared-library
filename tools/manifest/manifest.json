@@ -1,15 +1,15 @@
 {
   "packages": {
     "Company.UpdateChecker": {
-      "latest": "1.1.0",
+      "latest": "1.2.0",
       "channel": "stable",
       "critical": false,
-      "releasedAt": "2026-10-12T04:24:43Z",
-      "notes": "新增 bearer 鉴权支持私有清单地址",
+      "releasedAt": "2026-10-12T07:20:56Z",
+      "notes": "新增 AssemblyVersions.FromAssemblyName 按程序集名注册依赖（接线向导配套）",
       "artifacts": [
         {
           "type": "nuget",
-          "url": "https://updates.company.com/feed/company.updatechecker.1.1.0.nupkg"
+          "url": "https://updates.company.com/feed/company.updatechecker.1.2.0.nupkg"
         }
       ]
     },
@@ -27,5 +27,5 @@
       ]
     }
   },
-  "generatedAt": "2026-10-12T05:29:46Z"
+  "generatedAt": "2026-10-12T07:20:56Z"
 }
