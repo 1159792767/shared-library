@@ -38,4 +38,29 @@ public class ModbusClientTests
         Assert.True(client.IsConnected);
         Assert.Equal(1, client.ReadRegister(100));
     }
+
+    [Fact]
+    public void ReadRegisters_已写入连续寄存器_按序返回整批数据()
+    {
+        // 2.4.0 新增能力：批量读取（对应 Modbus 功能码 0x03 的场景）。
+        using var client = new ModbusClient();
+        client.Connect("192.168.1.10", 502);
+        client.WriteRegister(100, 0x0001);
+        client.WriteRegister(101, 0x0002);
+        client.WriteRegister(102, 0x0003);
+
+        ushort[] batch = client.ReadRegisters(100, 3);
+
+        Assert.Equal(new ushort[] { 0x0001, 0x0002, 0x0003 }, batch);
+    }
+
+    [Fact]
+    public void ReadRegisters_范围内有未写入寄存器_抛出KeyNotFound()
+    {
+        using var client = new ModbusClient();
+        client.Connect("192.168.1.10", 502);
+        client.WriteRegister(100, 1);
+
+        Assert.Throws<KeyNotFoundException>(() => client.ReadRegisters(100, 3));
+    }
 }

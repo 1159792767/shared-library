@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- 示例业务包：演示"项目库引用公共包 + 检测新版本"的完整链路 -->
-    <Version>2.3.1</Version>
-    <Description>示例公共包：设备通信驱动（2.3.1：修复断连自动重试缺陷）</Description>
+    <Version>2.4.0</Version>
+    <Description>示例公共包：设备通信驱动（2.4.0：新增 ReadRegisters 批量读取）</Description>
     <PackageTags>drivers;modbus;demo</PackageTags>
   </PropertyGroup>
 </Project>

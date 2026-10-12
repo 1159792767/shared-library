@@ -43,5 +43,17 @@ public sealed class ModbusClient : IDisposable
             ? value
             : throw new KeyNotFoundException($"寄存器 {address} 未写入或未连接");
 
+    /// <summary>批量读取寄存器：从起始地址连续读取 count 个（2.4.0 新增，对应 Modbus 功能码 0x03 场景）。</summary>
+    public ushort[] ReadRegisters(ushort startAddress, ushort count)
+    {
+        var values = new ushort[count];
+        for (var i = 0; i < count; i++)
+        {
+            values[i] = ReadRegister((ushort)(startAddress + i));
+        }
+
+        return values;
+    }
+
     public void Dispose() => _connected = false;
 }
