@@ -33,4 +33,23 @@ public class AssemblyVersionsTests
             () => AssemblyVersions.FromAssembly(dynamicAssembly));
         Assert.Contains("NoVersionAssembly", ex.Message);
     }
+
+    [Fact]
+    public void FromAssemblyName_按名称加载程序集_解析出SemVer()
+    {
+        // 接线向导生成的代码按包名（=程序集名）注册依赖，不依赖各包的入口类型
+        var version = AssemblyVersions.FromAssemblyName("Company.UpdateChecker");
+
+        Assert.NotNull(version);
+        Assert.False(version.IsPrerelease);
+        Assert.True(version.Major >= 1);
+    }
+
+    [Fact]
+    public void FromAssemblyName_程序集不存在_抛出含名称的明确异常()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => AssemblyVersions.FromAssemblyName("Company.NoSuchPackage"));
+        Assert.Contains("Company.NoSuchPackage", ex.Message);
+    }
 }

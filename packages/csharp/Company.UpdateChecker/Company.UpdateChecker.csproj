@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- 日常开发默认版本；正式发布版本由 CI 按 git tag 覆盖 -->
-    <Version>1.1.0</Version>
-    <Description>公司程序内更新检查模块：拉取版本清单、SemVer 对比、生成程序内"有新版本"提示；1.1.0 起支持 bearer 鉴权的私有清单地址。</Description>
+    <Version>1.2.0</Version>
+    <Description>公司程序内更新检查模块：拉取版本清单、SemVer 对比、生成程序内"有新版本"提示；1.1.0 起支持 bearer 鉴权的私有清单地址；1.2.0 新增 FromAssemblyName 按程序集名注册依赖（接线向导配套）。</Description>
     <PackageTags>update-checker;semver;manifest</PackageTags>
   </PropertyGroup>
 </Project>
