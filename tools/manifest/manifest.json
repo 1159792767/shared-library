@@ -14,18 +14,18 @@
       ]
     },
     "Company.Drivers": {
-      "latest": "2.6.2",
+      "latest": "2.6.3",
       "channel": "stable",
       "critical": false,
-      "releasedAt": "2026-10-12T09:14:13Z",
-      "notes": "Update version and description in csproj file",
+      "releasedAt": "2026-10-12T09:23:44Z",
+      "notes": "Update Company.Drivers.csproj",
       "artifacts": [
         {
           "type": "nuget",
-          "url": "https://updates.company.com/feed/company.drivers.2.6.2.nupkg"
+          "url": "https://updates.company.com/feed/company.drivers.2.6.3.nupkg"
         }
       ]
     }
   },
-  "generatedAt": "2026-10-12T09:14:13Z"
+  "generatedAt": "2026-10-12T09:23:44Z"
 }
