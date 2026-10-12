@@ -17,8 +17,8 @@
       "latest": "2.3.1",
       "channel": "stable",
       "critical": true,
-      "releasedAt": "2026-10-12T04:24:52Z",
-      "notes": "修复 Modbus 断连后未自动重试导致写寄存器失败的缺陷 [critical]",
+      "releasedAt": "2026-10-12T04:29:29Z",
+      "notes": "修复 Modbus 断连后未自动重试导致写寄存器失败的缺陷",
       "artifacts": [
         {
           "type": "nuget",
@@ -27,5 +27,5 @@
       ]
     }
   },
-  "generatedAt": "2026-10-12T04:24:52Z"
+  "generatedAt": "2026-10-12T04:29:29Z"
 }
