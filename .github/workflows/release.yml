@@ -63,6 +63,9 @@ jobs:
             throw "tag '$tag' 不符合约定 <PackageId>v<版本>（例：Company.Drivers-v2.3.1）"
           }
           $pkg = $Matches['pkg']; $ver = $Matches['ver']
+          # 显式拉取带注释 tag 对象：checkout 检出的 tag 引用可能是轻量的（直指提交），
+          # fetch-tags: true 也不能保证；用 refspec 显式拉取才能真正拿到标签注释
+          git fetch --no-tags origin "+refs/tags/$($tag):refs/tags/$($tag)"
           # 发布说明取 annotated tag 的首行；含 [critical] 自动标记重要更新
           # 注意：[critical] 必须用字面子串判断——-like 会把它当通配符字符类（匹配 c/r/i/t/a/l 任一字母），几乎恒真
           $notes = (git tag -l --format='%(contents:subject)' $tag)
