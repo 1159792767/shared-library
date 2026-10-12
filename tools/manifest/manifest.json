@@ -4,8 +4,8 @@
       "latest": "1.1.0",
       "channel": "stable",
       "critical": false,
-      "releasedAt": "2026-10-12T04:20:48Z",
-      "notes": "修复发布流水线三处缺陷：tag 说明读取 / critical 误报 / 清单提交竞态",
+      "releasedAt": "2026-10-12T04:24:43Z",
+      "notes": "新增 bearer 鉴权支持私有清单地址",
       "artifacts": [
         {
           "type": "nuget",
@@ -27,5 +27,5 @@
       ]
     }
   },
-  "generatedAt": "2026-10-12T04:20:48Z"
+  "generatedAt": "2026-10-12T04:24:43Z"
 }
