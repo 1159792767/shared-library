@@ -16,9 +16,9 @@
     "Company.Drivers": {
       "latest": "2.3.1",
       "channel": "stable",
-      "critical": true,
-      "releasedAt": "2026-10-12T03:19:34Z",
-      "notes": "修复 Modbus 断连后未自动重试导致写寄存器失败的缺陷",
+      "critical": false,
+      "releasedAt": "2026-10-12T04:20:40Z",
+      "notes": "修复发布流水线三处缺陷：tag 说明读取 / critical 误报 / 清单提交竞态",
       "artifacts": [
         {
           "type": "nuget",
@@ -27,5 +27,5 @@
       ]
     }
   },
-  "generatedAt": "2026-10-12T04:04:22Z"
+  "generatedAt": "2026-10-12T04:20:40Z"
 }
