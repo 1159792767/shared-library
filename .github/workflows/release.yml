@@ -21,6 +21,8 @@ on:
   push:
     branches: [main]        # main 每次推进都跑门禁
     tags: ['*v*.*.*']       # 推 tag = 发布
+  release:
+    types: [published]
 
 jobs:
   # ---------- 门禁：单元测试 ----------
